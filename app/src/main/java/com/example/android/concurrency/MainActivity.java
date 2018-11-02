@@ -45,11 +45,6 @@ public class MainActivity extends AppCompatActivity {
         mProgressBar = (ProgressBar) findViewById(R.id.progress_bar);
     }
 
-    private void clearOutput(View v) {
-        mLog.setText("");
-        scrollTextToEnd();
-    }
-
     private void log(String message) {
         Log.i(TAG, message);
         mLog.append(message + "\n");
@@ -73,6 +68,11 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    public void clearOutput(View view) {
+        mLog.setText("");
+        scrollTextToEnd();
+    }
+
     class MyTask extends AsyncTask<String,String,String>{
 
         @Override
@@ -80,6 +80,7 @@ public class MainActivity extends AppCompatActivity {
 
             for (String value:strings) {
                 Log.d(TAG, "doInBackground: "+value);
+                publishProgress(value);
 
                 try {
                     Thread.sleep(1000);
@@ -89,6 +90,13 @@ public class MainActivity extends AppCompatActivity {
             }
 
             return null;
+        }
+
+        @Override
+        protected void onProgressUpdate(String... values) {
+
+            log(values[0]);
+
         }
     }
 }
