@@ -17,49 +17,20 @@ public class MainActivity extends AppCompatActivity {
     private ScrollView mScroll;
     private TextView mLog;
     private ProgressBar mProgressBar;
-    public Handler mHandler;
 
-    DownloadThread mDownlaodThread;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        mHandler=new Handler(getMainLooper()){
-            @Override
-            public void handleMessage(Message msg) {
-
-                String data=msg.getData().getString(MESSAGE_KEY);
-
-                Log.d(TAG, "handleMessage: "+data);
-
-            }
-        };
-
-
         initViews();
 
-        mDownlaodThread = new DownloadThread(MainActivity.this);
-        mDownlaodThread.setName("Download Thread");
-        mDownlaodThread.start();
     }
 
     public void runCode(View v) {
 
         log("Running code");
         displayProgressBar(true);
-
-
-        //send message to download handler
-
-
-        for (String song:Playlist.songs){
-            Message message= Message.obtain();
-            message.obj=song;
-            mDownlaodThread.mHandler.sendMessage(message);
-
-        }
-
     }
 
     private void initViews() {
@@ -68,12 +39,12 @@ public class MainActivity extends AppCompatActivity {
         mProgressBar = (ProgressBar) findViewById(R.id.progress_bar);
     }
 
-    public void clearOutput(View v) {
+    private void clearOutput(View v) {
         mLog.setText("");
         scrollTextToEnd();
     }
 
-    public void log(String message) {
+    private void log(String message) {
         Log.i(TAG, message);
         mLog.append(message + "\n");
         scrollTextToEnd();
@@ -88,7 +59,7 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    public void displayProgressBar(boolean display) {
+    private void displayProgressBar(boolean display) {
         if (display) {
             mProgressBar.setVisibility(View.VISIBLE);
         } else {
