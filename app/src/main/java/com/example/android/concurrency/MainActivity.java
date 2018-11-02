@@ -1,5 +1,6 @@
 package com.example.android.concurrency;
 
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -31,6 +32,11 @@ public class MainActivity extends AppCompatActivity {
 
         log("Running code");
         displayProgressBar(true);
+
+        MyTask myTask=new MyTask();
+        myTask.execute("Red","Green","Blue","Yellow");
+        MyTask myTask2=new MyTask();
+        myTask2.execute("Red","Green");
     }
 
     private void initViews() {
@@ -64,6 +70,25 @@ public class MainActivity extends AppCompatActivity {
             mProgressBar.setVisibility(View.VISIBLE);
         } else {
             mProgressBar.setVisibility(View.INVISIBLE);
+        }
+    }
+
+    class MyTask extends AsyncTask<String,String,String>{
+
+        @Override
+        protected String doInBackground(String... strings) {
+
+            for (String value:strings) {
+                Log.d(TAG, "doInBackground: "+value);
+
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+
+            return null;
         }
     }
 }
