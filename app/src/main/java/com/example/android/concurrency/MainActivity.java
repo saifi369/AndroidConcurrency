@@ -89,13 +89,19 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
 
-            return null;
+            return "Download COmpleted";
         }
 
         @Override
         protected void onProgressUpdate(String... values) {
 
             log(values[0]);
+
+        }
+
+        @Override
+        protected void onPostExecute(String s) {
+            log(s);
 
         }
     }
