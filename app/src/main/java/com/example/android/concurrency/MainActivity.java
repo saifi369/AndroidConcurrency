@@ -1,5 +1,6 @@
 package com.example.android.concurrency;
 
+import android.app.FragmentManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
@@ -9,15 +10,16 @@ import android.widget.ProgressBar;
 import android.widget.ScrollView;
 import android.widget.TextView;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements AsyncFragment.MyTaskHandler{
 
     private static final String TAG = "MyTag";
     private static final String MESSAGE_KEY = "message_key";
+    private static final String FRAGMENT_TAG = "FRAGMENT_TAG";
     private ScrollView mScroll;
     private TextView mLog;
     private ProgressBar mProgressBar;
-    private MyTask mTask;
     private boolean mTaskRunning;
+    private AsyncFragment mFragment;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -26,6 +28,14 @@ public class MainActivity extends AppCompatActivity {
 
         initViews();
 
+        FragmentManager manager=getFragmentManager();
+        mFragment= (AsyncFragment) manager.findFragmentByTag(FRAGMENT_TAG);
+
+        if(mFragment == null){
+            mFragment=new AsyncFragment();
+            manager.beginTransaction().add(mFragment,FRAGMENT_TAG).commit();
+        }
+
     }
 
     public void runCode(View v) {
@@ -33,14 +43,7 @@ public class MainActivity extends AppCompatActivity {
 //        log("Running code");
 //        displayProgressBar(true);
 
-        if(mTaskRunning && mTask!=null){
-            mTask.cancel(true);
-            mTaskRunning=false;
-        }else {
-            mTask = new MyTask();
-            mTask.execute("Red", "Green", "Blue", "Yellow");
-            mTaskRunning=true;
-        }
+        mFragment.runTask("Red", "Green", "Blue", "Yellow");
 
     }
 
@@ -78,52 +81,8 @@ public class MainActivity extends AppCompatActivity {
         scrollTextToEnd();
     }
 
-    class MyTask extends AsyncTask<String, String, String> {
-
-        @Override
-        protected String doInBackground(String... strings) {
-
-            for (String value : strings) {
-
-                if(isCancelled()){
-                    publishProgress("task is cancelled");
-                    break;
-                }
-
-                Log.d(TAG, "doInBackground: " + value);
-                publishProgress(value);
-
-                try {
-                    Thread.sleep(1000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
-
-            return "Download COmpleted";
-        }
-
-        @Override
-        protected void onProgressUpdate(String... values) {
-
-            log(values[0]);
-
-        }
-
-        @Override
-        protected void onPostExecute(String s) {
-            log(s);
-
-        }
-
-        @Override
-        protected void onCancelled() {
-            log("task has been canelled");
-        }
-
-        @Override
-        protected void onCancelled(String s) {
-            log("Cancelled with return data "+s);
-        }
+    @Override
+    public void handleTask(String message) {
+        log(message);
     }
 }
