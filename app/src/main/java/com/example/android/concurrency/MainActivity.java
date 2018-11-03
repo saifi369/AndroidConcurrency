@@ -2,8 +2,6 @@ package com.example.android.concurrency;
 
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Message;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
@@ -18,6 +16,8 @@ public class MainActivity extends AppCompatActivity {
     private ScrollView mScroll;
     private TextView mLog;
     private ProgressBar mProgressBar;
+    private MyTask mTask;
+    private boolean mTaskRunning;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -30,13 +30,18 @@ public class MainActivity extends AppCompatActivity {
 
     public void runCode(View v) {
 
-        log("Running code");
-        displayProgressBar(true);
+//        log("Running code");
+//        displayProgressBar(true);
 
-        MyTask myTask=new MyTask();
-        myTask.execute("Red","Green","Blue","Yellow");
-        MyTask myTask2=new MyTask();
-        myTask2.execute("Red","Green");
+        if(mTaskRunning && mTask!=null){
+            mTask.cancel(true);
+            mTaskRunning=false;
+        }else {
+            mTask = new MyTask();
+            mTask.execute("Red", "Green", "Blue", "Yellow");
+            mTaskRunning=true;
+        }
+
     }
 
     private void initViews() {
@@ -73,13 +78,19 @@ public class MainActivity extends AppCompatActivity {
         scrollTextToEnd();
     }
 
-    class MyTask extends AsyncTask<String,String,String>{
+    class MyTask extends AsyncTask<String, String, String> {
 
         @Override
         protected String doInBackground(String... strings) {
 
-            for (String value:strings) {
-                Log.d(TAG, "doInBackground: "+value);
+            for (String value : strings) {
+
+                if(isCancelled()){
+                    publishProgress("task is cancelled");
+                    break;
+                }
+
+                Log.d(TAG, "doInBackground: " + value);
                 publishProgress(value);
 
                 try {
@@ -103,6 +114,16 @@ public class MainActivity extends AppCompatActivity {
         protected void onPostExecute(String s) {
             log(s);
 
+        }
+
+        @Override
+        protected void onCancelled() {
+            log("task has been canelled");
+        }
+
+        @Override
+        protected void onCancelled(String s) {
+            log("Cancelled with return data "+s);
         }
     }
 }
