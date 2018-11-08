@@ -1,8 +1,14 @@
 package com.example.android.concurrency;
 
 import android.app.FragmentManager;
+import android.content.Context;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
+import android.support.v4.app.LoaderManager;
+import android.support.v4.content.AsyncTaskLoader;
+import android.support.v4.content.Loader;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
@@ -10,16 +16,18 @@ import android.widget.ProgressBar;
 import android.widget.ScrollView;
 import android.widget.TextView;
 
-public class MainActivity extends AppCompatActivity implements AsyncFragment.MyTaskHandler{
+import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
+public class MainActivity extends AppCompatActivity {
 
     private static final String TAG = "MyTag";
     private static final String MESSAGE_KEY = "message_key";
-    private static final String FRAGMENT_TAG = "FRAGMENT_TAG";
     private ScrollView mScroll;
     private TextView mLog;
     private ProgressBar mProgressBar;
-    private boolean mTaskRunning;
-    private AsyncFragment mFragment;
+    private ExecutorService mExecutor;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -28,22 +36,23 @@ public class MainActivity extends AppCompatActivity implements AsyncFragment.MyT
 
         initViews();
 
-        FragmentManager manager=getFragmentManager();
-        mFragment= (AsyncFragment) manager.findFragmentByTag(FRAGMENT_TAG);
+        mExecutor = Executors.newFixedThreadPool(5);
 
-        if(mFragment == null){
-            mFragment=new AsyncFragment();
-            manager.beginTransaction().add(mFragment,FRAGMENT_TAG).commit();
-        }
+    }
 
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        mExecutor.shutdown();
     }
 
     public void runCode(View v) {
 
-//        log("Running code");
-//        displayProgressBar(true);
+        for (int i=0;i<10;i++){
+            Work work=new Work(i+1);
+            mExecutor.execute(work);
+        }
 
-        mFragment.runTask("Red", "Green", "Blue", "Yellow");
 
     }
 
@@ -54,6 +63,10 @@ public class MainActivity extends AppCompatActivity implements AsyncFragment.MyT
     }
 
     private void log(String message) {
+
+        if(mLog.getText().equals("Ready to Code!"))
+            mLog.setText("");
+
         Log.i(TAG, message);
         mLog.append(message + "\n");
         scrollTextToEnd();
@@ -81,8 +94,4 @@ public class MainActivity extends AppCompatActivity implements AsyncFragment.MyT
         scrollTextToEnd();
     }
 
-    @Override
-    public void handleTask(String message) {
-        log(message);
-    }
 }
