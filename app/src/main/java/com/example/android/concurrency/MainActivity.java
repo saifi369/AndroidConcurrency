@@ -16,18 +16,20 @@ import android.widget.ProgressBar;
 import android.widget.ScrollView;
 import android.widget.TextView;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements LoaderManager.LoaderCallbacks<String> {
 
     private static final String TAG = "MyTag";
     private static final String MESSAGE_KEY = "message_key";
+    private static final String DATA_KEY = "data_key";
     private ScrollView mScroll;
     private TextView mLog;
     private ProgressBar mProgressBar;
-    private ExecutorService mExecutor;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -36,23 +38,14 @@ public class MainActivity extends AppCompatActivity {
 
         initViews();
 
-        mExecutor = Executors.newFixedThreadPool(5);
-
-    }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        mExecutor.shutdown();
     }
 
     public void runCode(View v) {
 
-        for (int i=0;i<10;i++){
-            Work work=new Work(i+1);
-            mExecutor.execute(work);
-        }
+        Bundle bundle=new Bundle();
+        bundle.putString(DATA_KEY,"some url that returns some data");
 
+        getSupportLoaderManager().restartLoader(100,bundle,this).forceLoad();
 
     }
 
@@ -92,6 +85,72 @@ public class MainActivity extends AppCompatActivity {
     public void clearOutput(View view) {
         mLog.setText("");
         scrollTextToEnd();
+    }
+
+    @NonNull
+    @Override
+    public Loader<String> onCreateLoader(int id, @Nullable Bundle args) {
+
+        List<String> songsList= Arrays.asList(Playlist.songs);
+
+        return new MyTaskLoader(this,args,songsList);
+    }
+
+    @Override
+    public void onLoadFinished(@NonNull Loader<String> loader, String data) {
+        log(data);
+
+    }
+
+    @Override
+    public void onLoaderReset(@NonNull Loader<String> loader) {
+
+    }
+
+    public static class MyTaskLoader extends AsyncTaskLoader<String>{
+
+        private Bundle mArgs;
+        private List<String> mSongsList;
+
+        public MyTaskLoader(@NonNull Context context, Bundle args, List<String> songsList) {
+            super(context);
+            this.mArgs=args;
+            mSongsList=songsList;
+        }
+
+        @Nullable
+        @Override
+        public String loadInBackground() {
+
+            String data=mArgs.getString(DATA_KEY);
+
+            Log.d(TAG, "loadInBackground: URL: "+data);
+
+            Log.d(TAG, "loadInBackground: Thread Name: "+Thread.currentThread().getName());
+
+            for (String song:mSongsList){
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                Log.d(TAG, "loadInBackground: Song Name: "+song);
+
+            }
+
+
+            Log.d(TAG, "loadInBackground: Thread Terminated: ");
+
+
+            return "result from loader";
+        }
+
+        @Override
+        public void deliverResult(@Nullable String data) {
+            data+=" :modified";
+
+            super.deliverResult(data);
+        }
     }
 
 }
